@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -18,9 +20,7 @@
   <div class="main-content">
     <div class="cards-summary">
       <h2>الكروت المتاحة</h2>
-      <div class="cards-stats" id="cards-stats">
-        <!-- سيتم ملؤها بالجافاسكربت -->
-      </div>
+      <div class="cards-stats" id="cards-stats"></div>
     </div>
 
     <div class="control-panel">
@@ -46,9 +46,7 @@
       <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
     </div>
 
-    <div class="cards-container" id="cards-container">
-      <!-- سيتم عرض الكروت هنا -->
-    </div>
+    <div class="cards-container" id="cards-container"></div>
   </div>
 
   <div class="sales-modal" id="sales-modal">
@@ -59,6 +57,7 @@
       <div class="sales-tabs">
         <button class="tab-btn active" data-tab="today">مبيعات اليوم</button>
         <button class="tab-btn" data-tab="history">سجل المبيعات</button>
+        <button class="tab-btn" data-tab="share">مشاركة كروت</button>
       </div>
       
       <div class="tab-content active" id="today-sales">
@@ -73,9 +72,17 @@
         <div class="sales-list" id="history-list"></div>
       </div>
       
-      <div class="sales-summary" id="sales-summary">
-        <!-- سيتم ملؤها بالجافاسكربت -->
+      <div class="tab-content" id="share-sales">
+        <div class="share-options">
+          <button id="select-all" class="btn-secondary">تحديد الكل</button>
+          <button id="deselect-all" class="btn-secondary">إلغاء التحديد</button>
+          <button id="share-selected" class="btn-primary">مشاركة المحدد</button>
+          <button id="export-pdf" class="btn-primary">تصدير كـ PDF</button>
+        </div>
+        <div class="sales-list" id="share-list"></div>
       </div>
+      
+      <div class="sales-summary" id="sales-summary"></div>
     </div>
   </div>
 
@@ -83,9 +90,21 @@
     <div class="alert-content">
       <h3 id="alert-title">تنبيه</h3>
       <p id="alert-message"></p>
-      <div class="alert-buttons" id="alert-buttons">
-        <!-- سيتم ملؤها بالجافاسكربت -->
+      <div class="alert-buttons" id="alert-buttons"></div>
+    </div>
+  </div>
+
+  <div class="share-modal" id="share-modal">
+    <div class="share-content">
+      <span class="close-share-modal">&times;</span>
+      <h3>مشاركة الكروت</h3>
+      <div class="share-methods">
+        <button class="share-btn whatsapp">واتساب <i class="icon-whatsapp"></i></button>
+        <button class="share-btn email">البريد الإلكتروني <i class="icon-email"></i></button>
+        <button class="share-btn bluetooth">بلوتوث <i class="icon-bluetooth"></i></button>
+        <button class="share-btn save">حفظ الصور <i class="icon-save"></i></button>
       </div>
+      <div class="share-preview" id="share-preview"></div>
     </div>
   </div>
 </div>
