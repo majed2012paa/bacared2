@@ -107,7 +107,7 @@ header h1 {
 
 .cards-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
     gap: 15px;
     padding: 5px;
 }
@@ -121,10 +121,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     width: 220px;
-    height: 340px;
     margin: 0 auto;
-    position: relative;
-    overflow: hidden;
 }
 
 .card-header {
@@ -136,16 +133,27 @@ header h1 {
     margin-bottom: 10px;
 }
 
+.qr-container {
+    width: 130px;
+    height: 130px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 5px 0;
+    padding: 5px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+}
+
 .qr-code {
     width: 120px;
     height: 120px;
-    margin: 5px 0;
 }
 
 .card-details {
     width: 100%;
     padding: 10px 0;
-    margin: 5px 0;
+    margin: 10px 0;
     border-top: 1px dashed #ddd;
     border-bottom: 1px dashed #ddd;
 }
@@ -155,23 +163,25 @@ header h1 {
     justify-content: space-between;
     margin-bottom: 8px;
     font-size: 13px;
+    align-items: center;
 }
 
 .detail-label {
     font-weight: 600;
     color: #7f8c8d;
-    width: 45%;
+    width: 40%;
 }
 
 .detail-value {
     color: #2c3e50;
     text-align: left;
-    width: 55%;
-    word-break: break-all;
+    width: 60%;
+    word-break: break-word;
+    padding-left: 5px;
 }
 
 .card-footer {
-    margin-top: 10px;
+    margin-top: 5px;
     font-size: 12px;
     color: #95a5a6;
     text-align: center;
@@ -183,6 +193,8 @@ header h1 {
     width: 100%;
     padding: 8px;
     font-size: 14px;
+    border: none;
+    border-radius: 4px;
 }
 
 .sales-modal {
