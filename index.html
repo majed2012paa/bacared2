@@ -18,11 +18,6 @@
     </header>
 
     <div class="main-content">
-        <div class="cards-summary">
-            <h2>الكروت المتاحة</h2>
-            <div class="cards-stats" id="cards-stats"></div>
-        </div>
-
         <div class="control-panel">
             <div class="form-group">
                 <label for="card-type">نوع الكرت:</label>
@@ -44,6 +39,7 @@
             <button id="generate-btn" class="btn-primary">إنشاء الكروت</button>
             <button id="sales-btn" class="btn-secondary">عرض المبيعات</button>
             <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
+            <button id="export-btn" class="btn-primary">تصدير PDF</button>
         </div>
 
         <div class="cards-container" id="cards-container"></div>
@@ -57,7 +53,6 @@
             <div class="sales-tabs">
                 <button class="tab-btn active" data-tab="today">مبيعات اليوم</button>
                 <button class="tab-btn" data-tab="history">سجل المبيعات</button>
-                <button class="tab-btn" data-tab="share">مشاركة كروت</button>
             </div>
 
             <div class="tab-content active" id="today-sales">
@@ -72,16 +67,6 @@
                 <div class="sales-list" id="history-list"></div>
             </div>
 
-            <div class="tab-content" id="share-sales">
-                <div class="share-options">
-                    <button id="select-all" class="btn-secondary">تحديد الكل</button>
-                    <button id="deselect-all" class="btn-secondary">إلغاء التحديد</button>
-                    <button id="share-selected" class="btn-primary">مشاركة المحدد</button>
-                    <button id="export-pdf" class="btn-primary">تصدير كـ PDF</button>
-                </div>
-                <div class="sales-list" id="share-list"></div>
-            </div>
-
             <div class="sales-summary" id="sales-summary"></div>
         </div>
     </div>
@@ -91,18 +76,6 @@
             <h3 id="alert-title">تنبيه</h3>
             <p id="alert-message"></p>
             <div class="alert-buttons" id="alert-buttons"></div>
-        </div>
-    </div>
-
-    <div class="share-modal" id="share-modal">
-        <div class="share-content">
-            <span class="close-share-modal">&times;</span>
-            <h3>مشاركة الكروت</h3>
-            <div class="share-methods">
-                <button class="share-btn whatsapp">واتساب <i class="icon-whatsapp"></i></button>
-                <button class="share-btn save">حفظ الصور <i class="icon-save"></i></button>
-            </div>
-            <div class="share-preview" id="share-preview"></div>
         </div>
     </div>
 </div>
