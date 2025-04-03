@@ -8,7 +8,7 @@
 body {
     background-color: #f5f5f5;
     color: #333;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .container {
@@ -66,8 +66,7 @@ header h1 {
     font-size: 14px;
 }
 
-.form-group select,
-.form-group input {
+.form-group select, .form-group input {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 5px;
@@ -76,8 +75,7 @@ header h1 {
     background-color: #f9f9f9;
 }
 
-.btn-primary,
-.btn-secondary {
+.btn-primary, .btn-secondary {
     padding: 8px 16px;
     border: none;
     border-radius: 5px;
@@ -94,6 +92,7 @@ header h1 {
 
 .btn-primary:hover {
     background-color: #2980b9;
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -103,6 +102,7 @@ header h1 {
 
 .btn-secondary:hover {
     background-color: #7f8c8d;
+    transform: translateY(-1px);
 }
 
 .cards-container {
@@ -115,13 +115,18 @@ header h1 {
 .card {
     background-color: white;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 220px;
-    margin: 0 auto;
+    gap: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
@@ -130,71 +135,53 @@ header h1 {
     color: #2c3e50;
     text-align: center;
     width: 100%;
-    margin-bottom: 10px;
-}
-
-.qr-container {
-    width: 130px;
-    height: 130px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: 5px 0;
-    padding: 5px;
-    border: 1px solid #eee;
-    border-radius: 4px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #eee;
 }
 
 .qr-code {
     width: 120px;
     height: 120px;
+    margin: 5px 0;
 }
 
 .card-details {
     width: 100%;
-    padding: 10px 0;
-    margin: 10px 0;
-    border-top: 1px dashed #ddd;
-    border-bottom: 1px dashed #ddd;
+    padding: 8px 0;
 }
 
 .detail-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-size: 13px;
-    align-items: center;
 }
 
 .detail-label {
     font-weight: 600;
     color: #7f8c8d;
-    width: 40%;
 }
 
 .detail-value {
     color: #2c3e50;
     text-align: left;
-    width: 60%;
-    word-break: break-word;
-    padding-left: 5px;
+    max-width: 60%;
+    word-break: break-all;
 }
 
 .card-footer {
-    margin-top: 5px;
+    margin-top: 8px;
     font-size: 12px;
     color: #95a5a6;
     text-align: center;
     width: 100%;
+    padding-top: 8px;
+    border-top: 1px dashed #e0e0e0;
 }
 
 .card button {
-    margin-top: 10px;
+    margin-top: 8px;
     width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    border: none;
-    border-radius: 4px;
 }
 
 .sales-modal {
@@ -219,6 +206,7 @@ header h1 {
     max-height: 80vh;
     overflow-y: auto;
     position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .close-modal {
@@ -228,6 +216,11 @@ header h1 {
     font-size: 22px;
     cursor: pointer;
     color: #7f8c8d;
+    transition: color 0.2s;
+}
+
+.close-modal:hover {
+    color: #e74c3c;
 }
 
 .sales-list {
@@ -244,6 +237,11 @@ header h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background-color 0.2s;
+}
+
+.sale-item:hover {
+    background-color: #f0f0f0;
 }
 
 .sale-info {
@@ -281,7 +279,8 @@ header h1 {
     padding: 15px;
     border-radius: 8px;
     position: relative;
-    width: 220px;
+    width: 240px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 #close-preview {
@@ -291,6 +290,11 @@ header h1 {
     font-size: 20px;
     cursor: pointer;
     color: #7f8c8d;
+    transition: color 0.2s;
+}
+
+#close-preview:hover {
+    color: #e74c3c;
 }
 
 #save-preview-btn {
@@ -303,18 +307,28 @@ header h1 {
         padding: 10px;
     }
 
+    header h1 {
+        font-size: 20px;
+    }
+
+    .logo {
+        height: 45px;
+    }
+
     .control-panel {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .form-group {
+        width: 100%;
     }
 
     .cards-container {
         grid-template-columns: 1fr;
-    }
-
-    .card {
-        width: 100%;
-        max-width: 220px;
+        gap: 12px;
     }
 
     .modal-content {
@@ -335,6 +349,6 @@ header h1 {
 
     .preview-content {
         width: 90%;
-        max-width: 220px;
+        max-width: 240px;
     }
 }
