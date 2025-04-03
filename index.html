@@ -16,6 +16,13 @@
   </header>
 
   <div class="main-content">
+    <div class="cards-summary">
+      <h2>الكروت المتاحة</h2>
+      <div class="cards-stats" id="cards-stats">
+        <!-- سيتم ملؤها بالجافاسكربت -->
+      </div>
+    </div>
+
     <div class="control-panel">
       <div class="form-group">
         <label for="card-type">نوع الكرت:</label>
@@ -36,6 +43,7 @@
 
       <button id="generate-btn" class="btn-primary">إنشاء الكروت</button>
       <button id="sales-btn" class="btn-secondary">عرض المبيعات</button>
+      <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
     </div>
 
     <div class="cards-container" id="cards-container">
@@ -47,25 +55,37 @@
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h2>سجل المبيعات</h2>
-      <div class="sales-list" id="sales-list">
-        <!-- سيتم عرض المبيعات هنا -->
+      
+      <div class="sales-tabs">
+        <button class="tab-btn active" data-tab="today">مبيعات اليوم</button>
+        <button class="tab-btn" data-tab="history">سجل المبيعات</button>
+      </div>
+      
+      <div class="tab-content active" id="today-sales">
+        <div class="sales-list" id="today-list"></div>
+      </div>
+      
+      <div class="tab-content" id="history-sales">
+        <div class="date-picker">
+          <input type="date" id="history-date">
+          <button id="load-history" class="btn-primary">عرض المبيعات</button>
+        </div>
+        <div class="sales-list" id="history-list"></div>
+      </div>
+      
+      <div class="sales-summary" id="sales-summary">
+        <!-- سيتم ملؤها بالجافاسكربت -->
       </div>
     </div>
   </div>
-</div>
-<!-- ... (بقية الـ HTML كما هي) ... -->
-<div class="control-panel">
-  <!-- ... (بقية العناصر كما هي) ... -->
-  <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
-</div>
 
-<div class="alert-modal" id="alert-modal">
-  <div class="alert-content">
-    <h3 id="alert-title">تنبيه</h3>
-    <p id="alert-message"></p>
-    <div class="alert-buttons" id="alert-buttons">
-      <button class="btn-primary" id="alert-confirm">موافق</button>
-      <button class="btn-secondary" id="alert-cancel">إلغاء</button>
+  <div class="alert-modal" id="alert-modal">
+    <div class="alert-content">
+      <h3 id="alert-title">تنبيه</h3>
+      <p id="alert-message"></p>
+      <div class="alert-buttons" id="alert-buttons">
+        <!-- سيتم ملؤها بالجافاسكربت -->
+      </div>
     </div>
   </div>
 </div>
@@ -73,5 +93,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
