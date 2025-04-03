@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // العناصر الأساسية في الواجهة
     const cardTypeSelect = document.getElementById('card-type');
     const cardCountInput = document.getElementById('card-count');
     const generateBtn = document.getElementById('generate-btn');
@@ -12,9 +13,32 @@ document.addEventListener('DOMContentLoaded', function() {
     const closePreview = document.getElementById('close-preview');
     const savePreviewBtn = document.getElementById('save-preview-btn');
 
+    // الكروت المباعة
     let soldCards = JSON.parse(localStorage.getItem('soldCards')) || [];
 
-    generateBtn.addEventListener('click', function() {
+    // زر إنشاء الكروت
+    generateBtn.addEventListener('click', generateCards);
+
+    // زر عرض المبيعات
+    salesBtn.addEventListener('click', showSales);
+
+    // إغلاق نافذة المبيعات
+    closeModal.addEventListener('click', hideSalesModal);
+
+    // إغلاق نافذة المعاينة
+    closePreview.addEventListener('click', hidePreview);
+
+    // حفظ الكرت من المعاينة
+    savePreviewBtn.addEventListener('click', saveCardFromPreview);
+
+    // النقر خارج النوافذ لإغلاقها
+    window.addEventListener('click', function(event) {
+        if (event.target === salesModal) hideSalesModal();
+        if (event.target === previewContainer) hidePreview();
+    });
+
+    // دالة إنشاء الكروت
+    function generateCards() {
         const cardType = cardTypeSelect.value;
         const cardCount = parseInt(cardCountInput.value);
 
@@ -23,55 +47,49 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        fetch(`${cardType}.js`)
+        fetch(`cards/${cardType}.js`)
             .then(response => {
-                if (!response.ok) throw new Error('لم يتم العثور على الملف');
+                if (!response.ok) throw new Error('الملف غير موجود');
                 return response.text();
             })
             .then(data => {
-                // إزالة أي تعليقات أو أسطر غير ضرورية
-                const csvData = data.split('\n')
-                    .filter(line => !line.trim().startsWith('//') && line.trim() !== '')
-                    .join('\n');
+                const cards = parseCSV(data);
+                const availableCards = getAvailableCards(cards);
 
-                const cards = parseCSV(csvData);
-                const availableCards = cards.filter(card =>
-                    !soldCards.some(s => s.username === card.Login && s.password === card.Password)
-                );
+                if (availableCards.length === 0) {
+                    alert('لا توجد كروت متاحة في هذا الملف');
+                    return;
+                }
 
                 if (availableCards.length < cardCount) {
                     alert(`لا يوجد سوى ${availableCards.length} كرت متاح من هذا النوع`);
                     return;
                 }
 
-                cardsContainer.innerHTML = '';
-                for (let i = 0; i < cardCount; i++) {
-                    const card = availableCards[i];
-                    createCardElement(card, cardType);
-
-                    soldCards.push({
-                        type: cardType,
-                        username: card.Login,
-                        password: card.Password,
-                        date: new Date().toLocaleString(),
-                        uptime: card['Uptime Limit'] || 'غير محدد'
-                    });
-                }
-
-                localStorage.setItem('soldCards', JSON.stringify(soldCards));
+                displayCards(availableCards.slice(0, cardCount), cardType);
+                updateSoldCards(availableCards.slice(0, cardCount), cardType);
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert(`خطأ في تحميل ملف ${cardType}.js - تأكد من وجود الملف`);
+                alert(`خطأ في تحميل الكروت:\n${error.message}\nتأكد من:\n1. وجود ملف ${cardType}.js في مجلد cards/\n2. أن الملف يحتوي على بيانات صحيحة`);
             });
-    });
+    }
 
-    function parseCSV(csv) {
-        const lines = csv.split('\n').filter(line => line.trim() !== '');
-        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    // دالة تحليل بيانات CSV
+    function parseCSV(csvData) {
+        const lines = csvData.split('\n')
+            .filter(line => line.trim() !== '' && !line.trim().startsWith('//'));
+
+        if (lines.length < 2) {
+            throw new Error('الملف لا يحتوي على بيانات كافية');
+        }
+
+        const headers = lines[0].split(',')
+            .map(h => h.trim().replace(/"/g, ''));
 
         return lines.slice(1).map(line => {
-            const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+            const values = line.split(',')
+                .map(v => v.trim().replace(/"/g, ''));
             const obj = {};
             headers.forEach((header, i) => {
                 obj[header] = values[i] || '';
@@ -80,6 +98,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // الحصول على الكروت المتاحة
+    function getAvailableCards(cards) {
+        return cards.filter(card =>
+            card.Login && card.Password &&
+            !soldCards.some(s => s.username === card.Login && s.password === card.Password)
+        );
+    }
+
+    // عرض الكروت في الواجهة
+    function displayCards(cards, cardType) {
+        cardsContainer.innerHTML = '';
+        cards.forEach(card => {
+            const cardElement = createCardElement(card, cardType);
+            cardsContainer.appendChild(cardElement);
+        });
+    }
+
+    // إنشاء عنصر كرت
     function createCardElement(card, cardType) {
         const cardElement = document.createElement('div');
         cardElement.className = 'card';
@@ -122,79 +158,53 @@ document.addEventListener('DOMContentLoaded', function() {
         saveBtn.className = 'btn-primary';
         saveBtn.textContent = 'حفظ الكرت';
         saveBtn.style.marginTop = '10px';
-        saveBtn.addEventListener('click', function() {
-            showCardPreview({
+        saveBtn.addEventListener('click', () => showCardPreview({
+            type: cardType,
+            username: card.Login,
+            password: card.Password,
+            uptime: card['Uptime Limit'] || 'غير محدد',
+            date: new Date().toLocaleDateString()
+        }));
+
+        cardElement.querySelector('.card-footer').after(saveBtn);
+        return cardElement;
+    }
+
+    // تحديث الكروت المباعة
+    function updateSoldCards(cards, cardType) {
+        cards.forEach(card => {
+            soldCards.push({
                 type: cardType,
                 username: card.Login,
                 password: card.Password,
-                uptime: card['Uptime Limit'] || 'غير محدد',
-                date: new Date().toLocaleDateString()
+                date: new Date().toLocaleString(),
+                uptime: card['Uptime Limit'] || 'غير محدد'
             });
         });
-
-        cardElement.querySelector('.card-footer').after(saveBtn);
-        cardsContainer.appendChild(cardElement);
+        localStorage.setItem('soldCards', JSON.stringify(soldCards));
     }
 
-    // باقي الدوال (displaySales, showCardPreview) تبقى كما هي بدون تغيير
-    salesBtn.addEventListener('click', function() {
-        displaySales();
-        salesModal.style.display = 'flex';
-    });
-
-    closeModal.addEventListener('click', function() {
-        salesModal.style.display = 'none';
-    });
-
-    closePreview.addEventListener('click', function() {
-        previewContainer.style.display = 'none';
-    });
-
-    savePreviewBtn.addEventListener('click', function() {
-        const cardElement = previewCard.firstChild;
-        const tempCard = cardElement.cloneNode(true);
-
-        const buttons = tempCard.querySelectorAll('button');
-        buttons.forEach(btn => btn.remove());
-
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.appendChild(tempCard);
-        document.body.appendChild(tempContainer);
-
-        html2canvas(tempCard, {
-            scale: 2,
-            backgroundColor: null
-        }).then(canvas => {
-            const link = document.createElement('a');
-            const cardType = tempCard.querySelector('.card-header').textContent.replace('كرت شحن', '').replace('نقطة', '').trim();
-            const username = tempCard.querySelector('.detail-value').textContent;
-            link.download = `card_${cardType}_${username}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-
-            document.body.removeChild(tempContainer);
-        });
-    });
-
-    window.addEventListener('click', function(event) {
-        if (event.target === salesModal) salesModal.style.display = 'none';
-        if (event.target === previewContainer) previewContainer.style.display = 'none';
-    });
-
-    function displaySales() {
+    // عرض المبيعات
+    function showSales() {
         salesList.innerHTML = '';
 
         if (soldCards.length === 0) {
             salesList.innerHTML = '<p>لا توجد مبيعات مسجلة</p>';
+            salesModal.style.display = 'flex';
             return;
         }
 
-        const salesByType = {};
-        soldCards.forEach(sale => {
-            salesByType[sale.type] = (salesByType[sale.type] || 0) + 1;
-        });
+        displaySalesStats();
+        displaySalesItems();
+        salesModal.style.display = 'flex';
+    }
+
+    // عرض إحصائيات المبيعات
+    function displaySalesStats() {
+        const salesByType = soldCards.reduce((acc, sale) => {
+            acc[sale.type] = (acc[sale.type] || 0) + 1;
+            return acc;
+        }, {});
 
         const statsElement = document.createElement('div');
         statsElement.className = 'sale-item';
@@ -214,7 +224,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
         statsElement.innerHTML = statsHTML;
         salesList.appendChild(statsElement);
+    }
 
+    // عرض عناصر المبيعات
+    function displaySalesItems() {
         soldCards.forEach((sale, index) => {
             const saleItem = document.createElement('div');
             saleItem.className = 'sale-item';
@@ -230,20 +243,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
-            saleItem.querySelector('.delete-sale-btn').addEventListener('click', function() {
-                soldCards.splice(index, 1);
-                localStorage.setItem('soldCards', JSON.stringify(soldCards));
-                displaySales();
-            });
-
-            saleItem.querySelector('.view-sale-btn').addEventListener('click', function() {
-                showCardPreview(sale);
-            });
+            saleItem.querySelector('.delete-sale-btn').addEventListener('click', () => deleteSale(index));
+            saleItem.querySelector('.view-sale-btn').addEventListener('click', () => showCardPreview(sale));
 
             salesList.appendChild(saleItem);
         });
     }
 
+    // حذف عملية بيع
+    function deleteSale(index) {
+        soldCards.splice(index, 1);
+        localStorage.setItem('soldCards', JSON.stringify(soldCards));
+        showSales();
+    }
+
+    // إخفاء نافذة المبيعات
+    function hideSalesModal() {
+        salesModal.style.display = 'none';
+    }
+
+    // عرض معاينة الكرت
     function showCardPreview(sale) {
         previewCard.innerHTML = '';
 
@@ -286,5 +305,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
         previewCard.appendChild(cardElement);
         previewContainer.style.display = 'flex';
+    }
+
+    // إخفاء نافذة المعاينة
+    function hidePreview() {
+        previewContainer.style.display = 'none';
+    }
+
+    // حفظ الكرت من المعاينة
+    function saveCardFromPreview() {
+        const cardElement = previewCard.firstChild;
+        const tempCard = cardElement.cloneNode(true);
+
+        const buttons = tempCard.querySelectorAll('button');
+        buttons.forEach(btn => btn.remove());
+
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.appendChild(tempCard);
+        document.body.appendChild(tempContainer);
+
+        html2canvas(tempCard, {
+            scale: 2,
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            const cardType = tempCard.querySelector('.card-header').textContent.replace('كرت شحن', '').replace('نقطة', '').trim();
+            const username = tempCard.querySelector('.detail-value').textContent;
+            link.download = `card_${cardType}_${username}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            document.body.removeChild(tempContainer);
+        });
     }
 });
