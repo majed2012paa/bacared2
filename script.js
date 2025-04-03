@@ -13,8 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModal = document.querySelector('.close-modal');
     const todayTab = document.getElementById('today-sales');
     const historyTab = document.getElementById('history-sales');
+    const shareTab = document.getElementById('share-sales');
     const todayList = document.getElementById('today-list');
     const historyList = document.getElementById('history-list');
+    const shareList = document.getElementById('share-list');
     const historyDate = document.getElementById('history-date');
     const loadHistoryBtn = document.getElementById('load-history');
     const salesSummary = document.getElementById('sales-summary');
@@ -26,10 +28,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertMessage = document.getElementById('alert-message');
     const alertButtons = document.getElementById('alert-buttons');
 
+    // عناصر مشاركة الكروت
+    const shareModal = document.getElementById('share-modal');
+    const closeShareModal = document.querySelector('.close-share-modal');
+    const sharePreview = document.getElementById('share-preview');
+    const selectAllBtn = document.getElementById('select-all');
+    const deselectAllBtn = document.getElementById('deselect-all');
+    const shareSelectedBtn = document.getElementById('share-selected');
+    const exportPdfBtn = document.getElementById('export-pdf');
+    const whatsappBtn = document.querySelector('.share-btn.whatsapp');
+    const emailBtn = document.querySelector('.share-btn.email');
+    const bluetoothBtn = document.querySelector('.share-btn.bluetooth');
+    const saveBtn = document.querySelector('.share-btn.save');
+
     // البيانات
     let soldCards = JSON.parse(localStorage.getItem('soldCards')) || [];
     let currentCards = [];
     let allCardsData = {};
+    let selectedCards = [];
 
     // تهيئة التاريخ الحالي
     historyDate.valueAsDate = new Date();
@@ -51,24 +67,39 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (this.dataset.tab === 'today') {
                 displayTodaySales();
+            } else if (this.dataset.tab === 'share') {
+                displayShareSales();
             }
         });
     });
 
-    // أحداث الأزرار
+    // أحداث الأزرار الأساسية
     generateBtn.addEventListener('click', generateCardsHandler);
     salesBtn.addEventListener('click', displaySales);
     clearBtn.addEventListener('click', clearCardsHandler);
     closeModal.addEventListener('click', () => salesModal.style.display = 'none');
     loadHistoryBtn.addEventListener('click', loadHistoryHandler);
 
+    // أحداث مشاركة الكروت
+    closeShareModal.addEventListener('click', () => shareModal.style.display = 'none');
+    selectAllBtn.addEventListener('click', selectAllCards);
+    deselectAllBtn.addEventListener('click', deselectAllCards);
+    shareSelectedBtn.addEventListener('click', shareSelectedCards);
+    exportPdfBtn.addEventListener('click', exportToPDF);
+    whatsappBtn.addEventListener('click', () => shareVia('whatsapp'));
+    emailBtn.addEventListener('click', () => shareVia('email'));
+    bluetoothBtn.addEventListener('click', () => shareVia('bluetooth'));
+    saveBtn.addEventListener('click', saveCards);
+
     // أحداث النقر خارج النوافذ
     window.addEventListener('click', function(event) {
         if (event.target === salesModal) salesModal.style.display = 'none';
         if (event.target === alertModal) alertModal.style.display = 'none';
+        if (event.target === shareModal) shareModal.style.display = 'none';
     });
 
-    // الدوال الرئيسية
+    // ========== الدوال الرئيسية ========== //
+
     async function loadAllCards() {
         const cardTypes = ['200', '500', '1000', '2000', '5000', '10000'];
         
@@ -194,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return saleDate.getTime() === today.getTime();
         });
         
-        renderSalesList(todayList, todaySales);
+        renderSalesList(todayList, todaySales, true);
         updateSalesSummary(todaySales);
     }
 
@@ -208,11 +239,251 @@ document.addEventListener('DOMContentLoaded', function() {
             return saleDate >= date && saleDate < nextDay;
         });
         
-        renderSalesList(historyList, historySales);
+        renderSalesList(historyList, historySales, true);
         updateSalesSummary(historySales);
     }
 
-    // الدوال المساعدة
+    function displayShareSales() {
+        shareList.innerHTML = '';
+        selectedCards = [];
+        
+        soldCards.forEach((card, index) => {
+            const saleItem = document.createElement('div');
+            saleItem.className = 'sale-item selectable';
+            saleItem.dataset.cardId = index;
+            saleItem.innerHTML = `
+                <div class="sale-info">
+                    <span><strong>نوع الكرت:</strong> ${card.type} نقطة</span>
+                    <span><strong>اسم المستخدم:</strong> ${card.username}</span>
+                    <span><strong>التاريخ:</strong> ${card.date}</span>
+                </div>
+                <div class="card-checkbox">
+                    <input type="checkbox" id="card-${index}" class="card-select">
+                </div>
+            `;
+            
+            saleItem.addEventListener('click', function() {
+                this.classList.toggle('selected');
+                const cardId = this.dataset.cardId;
+                if (this.classList.contains('selected')) {
+                    if (!selectedCards.includes(cardId)) {
+                        selectedCards.push(cardId);
+                    }
+                } else {
+                    selectedCards = selectedCards.filter(id => id !== cardId);
+                }
+            });
+            
+            shareList.appendChild(saleItem);
+        });
+    }
+
+    function selectAllCards() {
+        document.querySelectorAll('#share-list .sale-item').forEach(item => {
+            item.classList.add('selected');
+            const cardId = item.dataset.cardId;
+            if (!selectedCards.includes(cardId)) {
+                selectedCards.push(cardId);
+            }
+        });
+    }
+
+    function deselectAllCards() {
+        document.querySelectorAll('#share-list .sale-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        selectedCards = [];
+    }
+
+    function shareSelectedCards() {
+        if (selectedCards.length === 0) {
+            showAlert('تنبيه', 'الرجاء تحديد كروت للمشاركة');
+            return;
+        }
+        
+        sharePreview.innerHTML = '';
+        selectedCards.forEach(cardId => {
+            const card = soldCards[cardId];
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            const qrContainer = document.createElement('div');
+            new QRCode(qrContainer, {
+                text: `http://www.bashafai.net/login?username=${card.username}&password=${card.password}`,
+                width: 120,
+                height: 120,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            cardElement.innerHTML = `
+                <div class="card-header">كرت شحن ${card.type} نقطة</div>
+                ${qrContainer.outerHTML}
+                <div class="card-details">
+                    <div class="detail-row">
+                        <span class="detail-label">اسم المستخدم:</span>
+                        <span class="detail-value">${card.username}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">كلمة المرور:</span>
+                        <span class="detail-value">${card.password}</span>
+                    </div>
+                </div>
+            `;
+            
+            sharePreview.appendChild(cardElement);
+        });
+        
+        shareModal.style.display = 'flex';
+    }
+
+    function shareVia(method) {
+        if (selectedCards.length === 0) return;
+        
+        const cardsToShare = selectedCards.map(id => soldCards[id]);
+        const shareText = cardsToShare.map(card => 
+            `كرت شحن ${card.type} نقطة\nاسم المستخدم: ${card.username}\nكلمة المرور: ${card.password}\nرابط الدخول: http://www.bashafai.net/login?username=${card.username}&password=${card.password}`
+        ).join('\n\n');
+        
+        switch(method) {
+            case 'whatsapp':
+                window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank');
+                break;
+            case 'email':
+                window.open(`mailto:?body=${encodeURIComponent(shareText)}`, '_blank');
+                break;
+            case 'bluetooth':
+                showAlert('تنبيه', 'سيتم مشاركة الكروت عبر البلوتوث. تأكد من تفعيل البلوتوث على جهازك.');
+                // هنا يمكن إضافة كود مشاركة حقيقي عبر البلوتوث
+                break;
+        }
+    }
+
+    function saveCards() {
+        if (selectedCards.length === 0) return;
+        
+        showAlert('نجاح', `سيتم حفظ ${selectedCards.length} كرت كصور`, false);
+        
+        selectedCards.forEach(cardId => {
+            const card = soldCards[cardId];
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            const qrContainer = document.createElement('div');
+            new QRCode(qrContainer, {
+                text: `http://www.bashafai.net/login?username=${card.username}&password=${card.password}`,
+                width: 150,
+                height: 150,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            cardElement.innerHTML = `
+                <div class="card-header">كرت شحن ${card.type} نقطة</div>
+                ${qrContainer.outerHTML}
+                <div class="card-details">
+                    <div class="detail-row">
+                        <span class="detail-label">اسم المستخدم:</span>
+                        <span class="detail-value">${card.username}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">كلمة المرور:</span>
+                        <span class="detail-value">${card.password}</span>
+                    </div>
+                </div>
+            `;
+            
+            // استخدام html2canvas لتحويل العنصر إلى صورة وحفظها
+            html2canvas(cardElement).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `card_${card.username}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        });
+    }
+
+    function exportToPDF() {
+        if (selectedCards.length === 0) {
+            showAlert('تنبيه', 'الرجاء تحديد كروت لتصديرها');
+            return;
+        }
+        
+        showAlert('تنبيه', 'جاري تحضير ملف PDF للكروت المحددة...', false);
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        selectedCards.forEach((cardId, index) => {
+            const card = soldCards[cardId];
+            if (index > 0) doc.addPage();
+            
+            doc.setFontSize(18);
+            doc.text(`كرت شحن ${card.type} نقطة`, 105, 20, { align: 'center' });
+            
+            // إنشاء QR code كصورة وإضافتها إلى PDF
+            const qrCode = new QRCode(null, {
+                text: `http://www.bashafai.net/login?username=${card.username}&password=${card.password}`,
+                width: 100,
+                height: 100,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            
+            const qrDataURL = qrCode._el.firstChild.toDataURL();
+            doc.addImage(qrDataURL, 'PNG', 55, 30, 100, 100);
+            
+            doc.setFontSize(14);
+            doc.text(`اسم المستخدم: ${card.username}`, 20, 140);
+            doc.text(`كلمة المرور: ${card.password}`, 20, 150);
+            doc.text(`تاريخ الإنشاء: ${card.date}`, 20, 160);
+        });
+        
+        doc.save('cards_export.pdf');
+    }
+
+    function renderSalesList(container, sales, withShareButton = false) {
+        container.innerHTML = '';
+        
+        if (sales.length === 0) {
+            container.innerHTML = '<p>لا توجد مبيعات مسجلة</p>';
+            return;
+        }
+        
+        sales.forEach((sale, index) => {
+            const saleItem = document.createElement('div');
+            saleItem.className = 'sale-item';
+            
+            let buttonsHTML = '';
+            if (withShareButton) {
+                buttonsHTML = `<button class="btn-primary share-single-btn" data-card-id="${index}">إرسال</button>`;
+            }
+            
+            saleItem.innerHTML = `
+                <div class="sale-info">
+                    <span><strong>نوع الكرت:</strong> ${sale.type} نقطة</span>
+                    <span><strong>اسم المستخدم:</strong> ${sale.username}</span>
+                    <span><strong>التاريخ:</strong> ${sale.date}</span>
+                </div>
+                ${buttonsHTML}
+            `;
+            
+            if (withShareButton) {
+                saleItem.querySelector('.share-single-btn').addEventListener('click', function() {
+                    selectedCards = [this.dataset.cardId];
+                    shareSelectedCards();
+                });
+            }
+            
+            container.appendChild(saleItem);
+        });
+    }
+
+    // ========== الدوال المساعدة ========== //
+
     function getToday() {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -241,28 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 cardsStats.appendChild(statElement);
             }
         }
-    }
-
-    function renderSalesList(container, sales) {
-        container.innerHTML = '';
-        
-        if (sales.length === 0) {
-            container.innerHTML = '<p>لا توجد مبيعات مسجلة</p>';
-            return;
-        }
-        
-        sales.forEach((sale, index) => {
-            const saleItem = document.createElement('div');
-            saleItem.className = 'sale-item';
-            saleItem.innerHTML = `
-                <div class="sale-info">
-                    <span><strong>نوع الكرت:</strong> ${sale.type} نقطة</span>
-                    <span><strong>اسم المستخدم:</strong> ${sale.username}</span>
-                    <span><strong>التاريخ:</strong> ${sale.date}</span>
-                </div>
-            `;
-            container.appendChild(saleItem);
-        });
     }
 
     function updateSalesSummary(sales) {
@@ -311,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         cardElement.innerHTML = `
             <div class="card-header">كرت شحن ${cardType} نقطة</div>
+            ${qrContainer.outerHTML}
             <div class="card-details">
                 <div class="detail-row">
                     <span class="detail-label">اسم المستخدم:</span>
@@ -328,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-footer">${new Date().toLocaleDateString()}</div>
         `;
         
-        cardElement.insertBefore(qrContainer, cardElement.querySelector('.card-details'));
         cardsContainer.appendChild(cardElement);
     }
 
