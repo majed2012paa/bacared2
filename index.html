@@ -1,85 +1,77 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>برنامج بيع الكروت - بشفاعي</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>برنامج بيع الكروت - بشفاعي</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 </head>
 <body>
 <div class="container">
-    <header>
-        <h1>برنامج بيع الكروت</h1>
-        <img src="logo.png" alt="بشفاعي" class="logo">
-    </header>
+  <header>
+    <h1>برنامج بيع الكروت</h1>
+    <img src="logo.png" alt="بشفاعي" class="logo">
+  </header>
 
-    <div class="main-content">
-        <div class="control-panel">
-            <div class="form-group">
-                <label for="card-type">نوع الكرت:</label>
-                <select id="card-type">
-                    <option value="200">200 نقطة</option>
-                    <option value="500">500 نقطة</option>
-                    <option value="1000">1000 نقطة</option>
-                    <option value="2000">2000 نقطة</option>
-                    <option value="5000">5000 نقطة</option>
-                    <option value="10000">10000 نقطة</option>
-                </select>
-            </div>
+  <div class="main-content">
+    <div class="control-panel">
+      <div class="form-group">
+        <label for="card-type">نوع الكرت:</label>
+        <select id="card-type">
+          <option value="200">200 نقطة</option>
+          <option value="500">500 نقطة</option>
+          <option value="1000">1000 نقطة</option>
+          <option value="2000">2000 نقطة</option>
+          <option value="5000">5000 نقطة</option>
+          <option value="10000">10000 نقطة</option>
+        </select>
+      </div>
 
-            <div class="form-group">
-                <label for="card-count">عدد الكروت:</label>
-                <input type="number" id="card-count" min="1" value="1">
-            </div>
+      <div class="form-group">
+        <label for="card-count">عدد الكروت:</label>
+        <input type="number" id="card-count" min="1" value="1">
+      </div>
 
-            <button id="generate-btn" class="btn-primary">إنشاء الكروت</button>
-            <button id="sales-btn" class="btn-secondary">عرض المبيعات</button>
-            <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
-            <button id="export-btn" class="btn-primary">تصدير PDF</button>
-        </div>
-
-        <div class="cards-container" id="cards-container"></div>
+      <button id="generate-btn" class="btn-primary">إنشاء الكروت</button>
+      <button id="sales-btn" class="btn-secondary">عرض المبيعات</button>
     </div>
 
-    <div class="sales-modal" id="sales-modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>سجل المبيعات</h2>
-
-            <div class="sales-tabs">
-                <button class="tab-btn active" data-tab="today">مبيعات اليوم</button>
-                <button class="tab-btn" data-tab="history">سجل المبيعات</button>
-            </div>
-
-            <div class="tab-content active" id="today-sales">
-                <div class="sales-list" id="today-list"></div>
-            </div>
-
-            <div class="tab-content" id="history-sales">
-                <div class="date-picker">
-                    <input type="date" id="history-date">
-                    <button id="load-history" class="btn-primary">عرض المبيعات</button>
-                </div>
-                <div class="sales-list" id="history-list"></div>
-            </div>
-
-            <div class="sales-summary" id="sales-summary"></div>
-        </div>
+    <div class="cards-container" id="cards-container">
+      <!-- سيتم عرض الكروت هنا -->
     </div>
+  </div>
 
-    <div class="alert-modal" id="alert-modal">
-        <div class="alert-content">
-            <h3 id="alert-title">تنبيه</h3>
-            <p id="alert-message"></p>
-            <div class="alert-buttons" id="alert-buttons"></div>
-        </div>
+  <div class="sales-modal" id="sales-modal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h2>سجل المبيعات</h2>
+      <div class="sales-list" id="sales-list">
+        <!-- سيتم عرض المبيعات هنا -->
+      </div>
     </div>
+  </div>
+</div>
+<!-- ... (بقية الـ HTML كما هي) ... -->
+<div class="control-panel">
+  <!-- ... (بقية العناصر كما هي) ... -->
+  <button id="clear-btn" class="btn-secondary">طباعة كروت جديدة</button>
+</div>
+
+<div class="alert-modal" id="alert-modal">
+  <div class="alert-content">
+    <h3 id="alert-title">تنبيه</h3>
+    <p id="alert-message"></p>
+    <div class="alert-buttons" id="alert-buttons">
+      <button class="btn-primary" id="alert-confirm">موافق</button>
+      <button class="btn-secondary" id="alert-cancel">إلغاء</button>
+    </div>
+  </div>
 </div>
 
 <script src="script.js"></script>
 </body>
 </html>
+
+
