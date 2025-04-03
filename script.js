@@ -12,10 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const closePreview = document.getElementById('close-preview');
     const savePreviewBtn = document.getElementById('save-preview-btn');
 
-    // تحميل الكروت المباعة من localStorage
     let soldCards = JSON.parse(localStorage.getItem('soldCards')) || [];
 
-    // حدث زر إنشاء الكروت
     generateBtn.addEventListener('click', function() {
         const cardType = cardTypeSelect.value;
         const cardCount = parseInt(cardCountInput.value);
@@ -25,19 +23,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // جلب الكروت من الملف المناسب
-        fetch(`cards/${cardType}.txt`)
-            .then(response => response.text())
+        fetch(`${cardType}.js`)
+            .then(response => {
+                if (!response.ok) throw new Error('لم يتم العثور على الملف');
+                return response.text();
+            })
             .then(data => {
-                // تحويل البيانات من نص إلى مصفوفة
-                const cards = parseCSV(data);
+                // إزالة أي تعليقات أو أسطر غير ضرورية
+                const csvData = data.split('\n')
+                    .filter(line => !line.trim().startsWith('//') && line.trim() !== '')
+                    .join('\n');
 
-                // تصفية الكروت غير المباعة
+                const cards = parseCSV(csvData);
                 const availableCards = cards.filter(card =>
-                    !soldCards.some(sold =>
-                        sold.username === card.Login &&
-                        sold.password === card.Password
-                    )
+                    !soldCards.some(s => s.username === card.Login && s.password === card.Password)
                 );
 
                 if (availableCards.length < cardCount) {
@@ -45,13 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // إنشاء الكروت المطلوبة
                 cardsContainer.innerHTML = '';
                 for (let i = 0; i < cardCount; i++) {
                     const card = availableCards[i];
                     createCardElement(card, cardType);
 
-                    // إضافة الكرت إلى قائمة المباعة
                     soldCards.push({
                         type: cardType,
                         username: card.Login,
@@ -61,80 +58,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 }
 
-                // حفظ الكروت المباعة في localStorage
                 localStorage.setItem('soldCards', JSON.stringify(soldCards));
             })
             .catch(error => {
-                console.error('Error loading cards:', error);
-                alert('حدث خطأ أثناء تحميل الكروت');
+                console.error('Error:', error);
+                alert(`خطأ في تحميل ملف ${cardType}.js - تأكد من وجود الملف`);
             });
     });
 
-    // حدث زر عرض المبيعات
-    salesBtn.addEventListener('click', function() {
-        displaySales();
-        salesModal.style.display = 'flex';
-    });
-
-    // حدث إغلاق نافذة المبيعات
-    closeModal.addEventListener('click', function() {
-        salesModal.style.display = 'none';
-    });
-
-    // حدث إغلاق نافذة المعاينة
-    closePreview.addEventListener('click', function() {
-        previewContainer.style.display = 'none';
-    });
-
-    // حدث حفظ الكرت من نافذة المعاينة
-    savePreviewBtn.addEventListener('click', function() {
-        html2canvas(previewCard.firstChild, {
-            scale: 2,
-            backgroundColor: null
-        }).then(canvas => {
-            const link = document.createElement('a');
-            const cardType = previewCard.firstChild.querySelector('.card-header').textContent.replace('كرت شحن', '').replace('نقطة', '').trim();
-            const username = previewCard.firstChild.querySelector('.detail-value').textContent;
-            link.download = `card_${cardType}_${username}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
-    });
-
-    // إغلاق النوافذ عند النقر خارجها
-    window.addEventListener('click', function(event) {
-        if (event.target === salesModal) {
-            salesModal.style.display = 'none';
-        }
-        if (event.target === previewContainer) {
-            previewContainer.style.display = 'none';
-        }
-    });
-
-    // دالة لتحويل بيانات CSV إلى مصفوفة
     function parseCSV(csv) {
-        const lines = csv.trim().split('\n');
+        const lines = csv.split('\n').filter(line => line.trim() !== '');
         const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
 
         return lines.slice(1).map(line => {
             const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
             const obj = {};
             headers.forEach((header, i) => {
-                obj[header] = values[i];
+                obj[header] = values[i] || '';
             });
             return obj;
         });
     }
 
-    // دالة لإنشاء عنصر كرت
     function createCardElement(card, cardType) {
         const cardElement = document.createElement('div');
         cardElement.className = 'card';
 
-        // إنشاء رابط الدخول
         const loginUrl = `http://www.bashafai.net/login?username=${card.Login}&password=${card.Password}`;
 
-        // إنشاء الباركود
         const qrContainer = document.createElement('div');
         new QRCode(qrContainer, {
             text: loginUrl,
@@ -146,7 +97,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         qrContainer.className = 'qr-code';
 
-        // إنشاء محتوى الكرت
         cardElement.innerHTML = `
             <div class="card-header">كرت شحن ${cardType} نقطة</div>
             <div class="card-details">
@@ -166,25 +116,73 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-footer">${new Date().toLocaleDateString()}</div>
         `;
 
-        // إضافة الباركود إلى الكرت
         cardElement.insertBefore(qrContainer, cardElement.querySelector('.card-details'));
 
-        // إضافة زر الحفظ
         const saveBtn = document.createElement('button');
         saveBtn.className = 'btn-primary';
         saveBtn.textContent = 'حفظ الكرت';
         saveBtn.style.marginTop = '10px';
         saveBtn.addEventListener('click', function() {
-            saveCardAsImage(cardElement);
+            showCardPreview({
+                type: cardType,
+                username: card.Login,
+                password: card.Password,
+                uptime: card['Uptime Limit'] || 'غير محدد',
+                date: new Date().toLocaleDateString()
+            });
         });
 
         cardElement.querySelector('.card-footer').after(saveBtn);
-
-        // إضافة الكرت إلى الواجهة
         cardsContainer.appendChild(cardElement);
     }
 
-    // دالة لعرض المبيعات
+    // باقي الدوال (displaySales, showCardPreview) تبقى كما هي بدون تغيير
+    salesBtn.addEventListener('click', function() {
+        displaySales();
+        salesModal.style.display = 'flex';
+    });
+
+    closeModal.addEventListener('click', function() {
+        salesModal.style.display = 'none';
+    });
+
+    closePreview.addEventListener('click', function() {
+        previewContainer.style.display = 'none';
+    });
+
+    savePreviewBtn.addEventListener('click', function() {
+        const cardElement = previewCard.firstChild;
+        const tempCard = cardElement.cloneNode(true);
+
+        const buttons = tempCard.querySelectorAll('button');
+        buttons.forEach(btn => btn.remove());
+
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.left = '-9999px';
+        tempContainer.appendChild(tempCard);
+        document.body.appendChild(tempContainer);
+
+        html2canvas(tempCard, {
+            scale: 2,
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            const cardType = tempCard.querySelector('.card-header').textContent.replace('كرت شحن', '').replace('نقطة', '').trim();
+            const username = tempCard.querySelector('.detail-value').textContent;
+            link.download = `card_${cardType}_${username}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            document.body.removeChild(tempContainer);
+        });
+    });
+
+    window.addEventListener('click', function(event) {
+        if (event.target === salesModal) salesModal.style.display = 'none';
+        if (event.target === previewContainer) previewContainer.style.display = 'none';
+    });
+
     function displaySales() {
         salesList.innerHTML = '';
 
@@ -193,16 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // تجميع المبيعات حسب النوع
         const salesByType = {};
         soldCards.forEach(sale => {
-            if (!salesByType[sale.type]) {
-                salesByType[sale.type] = 0;
-            }
-            salesByType[sale.type]++;
+            salesByType[sale.type] = (salesByType[sale.type] || 0) + 1;
         });
 
-        // عرض الإحصائيات
         const statsElement = document.createElement('div');
         statsElement.className = 'sale-item';
         statsElement.style.backgroundColor = '#eaf2f8';
@@ -222,7 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
         statsElement.innerHTML = statsHTML;
         salesList.appendChild(statsElement);
 
-        // عرض تفاصيل المبيعات
         soldCards.forEach((sale, index) => {
             const saleItem = document.createElement('div');
             saleItem.className = 'sale-item';
@@ -252,17 +244,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // دالة لعرض معاينة الكرت
     function showCardPreview(sale) {
         previewCard.innerHTML = '';
 
         const cardElement = document.createElement('div');
         cardElement.className = 'card';
 
-        // إنشاء رابط الدخول
         const loginUrl = `http://www.bashafai.net/login?username=${sale.username}&password=${sale.password}`;
 
-        // إنشاء الباركود
         const qrContainer = document.createElement('div');
         new QRCode(qrContainer, {
             text: loginUrl,
@@ -274,7 +263,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         qrContainer.className = 'qr-code';
 
-        // إنشاء محتوى الكرت
         cardElement.innerHTML = `
             <div class="card-header">كرت شحن ${sale.type} نقطة</div>
             <div class="card-details">
@@ -294,42 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-footer">${sale.date}</div>
         `;
 
-        // إضافة الباركود إلى الكرت
         cardElement.insertBefore(qrContainer, cardElement.querySelector('.card-details'));
 
         previewCard.appendChild(cardElement);
         previewContainer.style.display = 'flex';
-    }
-
-    // دالة لحفظ الكرت كصورة
-    function saveCardAsImage(cardElement) {
-        // إنشاء نسخة من الكرت بدون زر الحفظ
-        const cardClone = cardElement.cloneNode(true);
-        const saveBtn = cardClone.querySelector('button');
-        if (saveBtn) {
-            cardClone.removeChild(saveBtn);
-        }
-
-        // إضافة النسخة مؤقتاً إلى DOM
-        const tempContainer = document.createElement('div');
-        tempContainer.style.position = 'absolute';
-        tempContainer.style.left = '-9999px';
-        tempContainer.appendChild(cardClone);
-        document.body.appendChild(tempContainer);
-
-        html2canvas(cardClone, {
-            scale: 2,
-            backgroundColor: null
-        }).then(canvas => {
-            const link = document.createElement('a');
-            const cardType = cardClone.querySelector('.card-header').textContent.replace('كرت شحن', '').replace('نقطة', '').trim();
-            const username = cardClone.querySelector('.detail-value').textContent;
-            link.download = `card_${cardType}_${username}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-
-            // إزالة العنصر المؤقت
-            document.body.removeChild(tempContainer);
-        });
     }
 });
