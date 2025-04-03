@@ -1,0 +1,11 @@
+Login,Password,Uptime Limit,Used Uptime,Used Download,Used Upload
+"v28q9e","p6kex6","4w2d","","",""
+"wuf5kv","5mk3bf","4w2d","","",""
+"ztvhh9","4ri8rd","4w2d","","",""
+"s7bcub","wbhw65","4w2d","","",""
+"9k5uth","2m882q","4w2d","","",""
+"ggbubi","qr3he6","4w2d","","",""
+"n2seda","iyjg3m","4w2d","","",""
+"uh2kt6","v7p5jc","4w2d","","",""
+"xgih6n","nzetwx","4w2d","","",""
+"zeb5e3","5ad2kr","4w2d","","",""
